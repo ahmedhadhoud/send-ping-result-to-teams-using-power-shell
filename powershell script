@@ -1,0 +1,37 @@
+$webhookUrl = "your webhook url "
+
+
+while (1) {
+   $names=Get-Content "the path of the file you have the list of IPs\Devices.txt"
+foreach ($name in $names){
+if(Test-Connection -ComputerName $name -Count 1 -ErrorAction SilentlyContinue){
+Write-Host "$name is UP" -ForegroundColor Green
+
+}
+else{
+Write-Host "$name is DOWN" -ForegroundColor Red
+$Output+="$name is DOWN"+"`n"
+ $webhookMessage = [PSCustomObject][Ordered]@{
+        "@type"      = "MessageCard"
+        "@context"   = "http://schema.org/extensions"
+        "summary"    = "Ping Alert"
+        "themeColor" = '700015'
+        "title"      = "$name is DOWN"+"`n"
+        "text"       = "$ping status <br />
+    }
+     
+    $webhookJSON = convertto-json $webhookMessage -Depth 50
+     
+    $webhookCall = @{
+        "URI"         = $webhookUrl
+        "Method"      = 'POST'
+        "Body"        = $webhookJSON
+        "ContentType" = 'application/json'
+    }
+     
+    Invoke-RestMethod @webhookCall
+}
+}
+$Output | Out-File "the path of file you want to save the rsult\result.txt"
+Start-Sleep -s 10
+}  
